@@ -216,7 +216,6 @@ class DataLoader(object):
     last_batch : {'keep', 'discard', 'rollover'}
         How to handle the last batch if batch_size does not evenly divide
         `len(dataset)`.
-
         keep - A batch with less samples than previous batches is returned.
         discard - The last batch is discarded if its incomplete.
         rollover - The remaining samples are rolled over to the next epoch.
@@ -226,23 +225,8 @@ class DataLoader(object):
     batchify_fn : callable
         Callback function to allow users to specify how to merge samples
         into a batch. Defaults to `default_batchify_fn`::
-
-            def default_batchify_fn(data):
-                if isinstance(data[0], nd.NDArray):
-                    return nd.stack(*data)
-                elif isinstance(data[0], tuple):
-                    data = zip(*data)
-                    return [default_batchify_fn(i) for i in data]
-                else:
-                    data = np.asarray(data)
-                    return nd.array(data, dtype=data.dtype)
-
     num_workers : int, default 0
         The number of multiprocessing workers to use for data preprocessing.
-    pin_memory : boolean, default False
-        If ``True``, the dataloader will copy NDArrays into pinned memory
-        before returning them. Copying from CPU pinned memory to GPU is faster
-        than from normal CPU memory.
     """
     def __init__(self, dataset, batch_size=None, shuffle=False, sampler=None,
                  last_batch=None, batch_sampler=None, batchify_fn=None,
@@ -310,6 +294,7 @@ if __name__ == '__main__':
         print(test)
         print(data.shape, label)
         test += 1
+        break
     print(time.time() - a )
     
         

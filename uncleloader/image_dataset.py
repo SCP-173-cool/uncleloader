@@ -71,7 +71,7 @@ class ImageFolderDataset(dataset.Dataset):
                 self.items.append((filename, label))
 
     def __getitem__(self, idx):
-        with open(self.items[idx][0]) as fp:
+        with open(self.items[idx][0], 'rb') as fp:
             raw = fp.read()
         img = cv2.imdecode(np.asarray(bytearray(raw), dtype="uint8"), cv2.IMREAD_COLOR)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -83,13 +83,23 @@ class ImageFolderDataset(dataset.Dataset):
     def __len__(self):
         return len(self.items)
 
+
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+
+
     dataset_path = '/data/dogs_vs_cats/train'
-    dataset = ImageFolderDataset(dataset_path)
+    from transform_tmp import transform
+    dataset = ImageFolderDataset(dataset_path, transform=transform)
+    
+    img, label = dataset.__getitem__(1)
+    
+
     print len(dataset)
     for img, label in dataset:
         print(img.shape, label)
+        plt.imshow(img)
+        plt.show()
 
-    import matplotlib.pyplot as plt
-    plt.imshow(img)
-    plt.show()
+
+    
