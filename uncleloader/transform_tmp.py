@@ -9,19 +9,24 @@ import numpy as np
 import cv2
 import random
 
-def image_resize(img, size=(150, 150)):
-    return cv2.resize(img, size, interpolation=cv2.INTER_CUBIC)
+paddings = {'z': cv2.BORDER_CONSTANT, 'r': cv2.BORDER_REFLECT_101}
+interpolations = {'bilinear': cv2.INTER_LINEAR, 'bicubic': cv2.INTER_CUBIC, 'nearest': cv2.INTER_NEAREST}
 
-def resize_shorter(img, shorter_length=300):
+def _apply_perspective(img, M, shape, interp_mode='bilinear', padding_mode='r'):
+     return cv2.warpPerspective(img, M, shape, 
+                                flags=interpolations[interp_mode], 
+                                borderMode=paddings[padding_mode])
+
+def image_resize(img, size=(150, 150), interp_mode='bilinear'):
+    return cv2.resize(img, size, interpolation=interpolations[interp_mode])
+
+def resize_shorter(img, shorter_length=300, interp_mode='bilinear'):
     rows, cols = img.shape[:2]
     if rows >= cols:
-        #size = (int(1.0*rows*shorter_length/cols), int(shorter_length))
         size = (int(shorter_length), int(1.0*rows*shorter_length/cols))
     else:
-        #size = (int(shorter_length), int(1.0*cols*shorter_length/rows))
         size = (int(1.0*cols*shorter_length/rows), int(shorter_length))
-
-    return cv2.resize(img, size, interpolation=cv2.INTER_CUBIC)
+    return cv2.resize(img, size, interpolation=interpolations[interp_mode])
 
 def random_flip_left_right(img):
     if random.random() > 0.5:
@@ -33,7 +38,7 @@ def random_flip_up_down(img):
         return cv2.flip(img, 0)
     return img
 
-def random_rotate(img, rotage_range=(0, 180), random_position=False):
+def random_rotate(img, rotage_range=(0, 180), random_position=False, interp_mode='bilinear', padding_mode='r'):
     angel = np.random.uniform(rotage_range[0], rotage_range[1])
     rows, cols = img.shape[:2]
 
@@ -45,7 +50,8 @@ def random_rotate(img, rotage_range=(0, 180), random_position=False):
         cen_y = int(rows/2)
     
     M = cv2.getRotationMatrix2D((cen_x, cen_y), angel, 1)
-    img = cv2.warpAffine(img, M, (rows, cols))
+    M = np.concatenate([M, [[0, 0, 1]]], axis=0)
+    img = _apply_perspective(img, M, (rows, cols), interp_mode, padding_mode)
 
     return img
 
@@ -63,20 +69,20 @@ def random_crop(img, crop_size):
     return img[start_x:end_x, start_y:end_y, :]
 
 
-def random_shear(img, range_x=(-0.5, 0.5), range_y=(0, 0)):
+def random_shear(img, range_x=(-0.5, 0.5), range_y=(0, 0), interp_mode='bilinear', padding_mode='r'):
     rows, cols = img.shape[:2]
     shear_x = np.random.uniform(range_x[0], range_x[1])
     shear_y = np.random.uniform(range_y[0], range_y[1])
-    M = np.array([1, shear_x, 0, shear_y, 1, 0]).reshape((2, 3)).astype(np.float32)
-    img = cv2.warpAffine(img, M, (rows, cols))
+    M = np.array([1, shear_x, 0, shear_y, 1, 0, 0, 0, 1]).reshape((3, 3)).astype(np.float32)
+    img = _apply_perspective(img, M, (rows, cols), interp_mode, padding_mode)
     return img
 
-def random_rescale(img, range_x=(0.5, 1.5), range_y=(1, 1)):
+def random_rescale(img, range_x=(0.5, 1.5), range_y=(1, 1), interp_mode='bilinear', padding_mode='r'):
     rows, cols = img.shape[:2]
     scale_x = np.random.uniform(range_x[0], range_x[1])
     scale_y = np.random.uniform(range_y[0], range_y[1])
-    M = np.array([scale_x, 0, 0, 0, scale_y, 0]).reshape((2, 3)).astype(np.float32)
-    img = cv2.warpAffine(img, M, (rows, cols))
+    M = np.array([scale_x, 0, 0, 0, scale_y, 0, 0, 0, 1]).reshape((3, 3)).astype(np.float32)
+    img = _apply_perspective(img, M, (rows, cols), interp_mode, padding_mode)
     return img
 
 
@@ -103,7 +109,7 @@ def random_hsv(img, h_range=(-720, 720), s_range=(-40, 40), v_range=(-40, 40)):
 
 def transform(img, label):
     #img = random_rescale(img)
-    #img = random_shear(img, range_x=(-0.5, 0.5), range_y=(-0.5, 0.5))
+    img = random_shear(img, range_x=(-0.5, 0.5), range_y=(-0.5, 0.5))
     #img = random_rotate(img, random_position=False)
     #img = image_resize(img, size=(400, 400))
     img = resize_shorter(img, shorter_length=300)

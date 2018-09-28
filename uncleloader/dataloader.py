@@ -294,7 +294,7 @@ if __name__ == '__main__':
         print(test)
         print(data.shape, label)
         test += 1
-        break
+        #break
     print(time.time() - a )
     
         
