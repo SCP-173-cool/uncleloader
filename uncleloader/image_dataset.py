@@ -6,14 +6,17 @@ Created on Wed Aug 29 14:31:52 2018
 @author: scp-173
 """
 
+import sys
+sys.dont_write_bytecode = True
+
 import os
-import dataset
+import base_dataset
 import warnings
-import cv2
 import numpy as np
+from utils import image_read
 
 
-class ImageFolderDataset(dataset.Dataset):
+class ImageFolderDataset(base_dataset.Dataset):
     """A dataset for loading image files stored in a folder structure like::
 
         root/car/0001.jpg
@@ -71,10 +74,7 @@ class ImageFolderDataset(dataset.Dataset):
                 self.items.append((filename, label))
 
     def __getitem__(self, idx):
-        with open(self.items[idx][0], 'rb') as fp:
-            raw = fp.read()
-        img = cv2.imdecode(np.asarray(bytearray(raw), dtype="uint8"), cv2.IMREAD_COLOR)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = image_read(self.items[idx][0])
         label = self.items[idx][1]
         if self._transform is not None:
             return self._transform(img, label)
@@ -88,14 +88,13 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
 
-    dataset_path = '/data/dogs_vs_cats/train'
+    dataset_path = '/home/loktar/datasets/dogs_vs_cats/train/'
     from transform_tmp import transform
     dataset = ImageFolderDataset(dataset_path, transform=transform)
     
     img, label = dataset.__getitem__(1)
     
 
-    print len(dataset)
     for img, label in dataset:
         print(img.shape, label)
         plt.imshow(img)
