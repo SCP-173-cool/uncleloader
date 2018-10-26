@@ -281,8 +281,23 @@ class DataLoader(object):
 
 if __name__ == '__main__':
     from image_dataset import ImageFolderDataset
-    from transform_tmp import transform
-    dataset_path = '/data/dogs_vs_cats/train'
+    dataset_path = '/Users/kevin/Datasets/dogs_vs_cats/train/'
+    from base_transforms import *
+
+    transform = DualCompose([ImageShorterResize(300), 
+                             random_crop((224, 224)),
+                             random_hsv(prob=0.8),
+                             RandomCompose([
+                                random_horizontal_flip(),
+                                random_vertical_flip(),
+                                random_flip(),
+                                random_transpose(),
+                                random_shear(),
+                                random_rescale(),
+                                random_rotate(),
+                                CLAHE()
+                             ], max_num=3, ImageOnly=True)], 
+                    ImageOnly=True)
     dataset = ImageFolderDataset(dataset_path, transform=transform)
     loader = DataLoader(dataset, batch_size=128, num_workers=8, shuffle=True)
     

@@ -17,35 +17,7 @@ from utils import image_read
 
 
 class ImageFolderDataset(base_dataset.Dataset):
-    """A dataset for loading image files stored in a folder structure like::
-
-        root/car/0001.jpg
-        root/car/xxxa.jpg
-        root/car/yyyb.jpg
-        root/bus/123.jpg
-        root/bus/023.jpg
-        root/bus/wwww.jpg
-
-    Parameters
-    ----------
-    root : str
-        Path to root directory.
-    flag : {0, 1}, default 1
-        If 0, always convert loaded images to greyscale (1 channel).
-        If 1, always convert loaded images to colored (3 channels).
-    transform : callable, default None
-        A function that takes data and label and transforms them:
-    ::
-
-        transform = lambda data, label: (data.astype(np.float32)/255, label)
-
-    Attributes
-    ----------
-    synsets : list
-        List of class names. `synsets[i]` is the name for the integer label `i`
-    items : list of tuples
-        List of all images in (filename, label) pairs.
-    """
+    
     def __init__(self, root, flag=1, transform=None):
         self._root = os.path.expanduser(root)
         self._flag = flag
@@ -88,11 +60,26 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
 
-    dataset_path = '/home/loktar/datasets/dogs_vs_cats/train/'
-    from transform_tmp import transform
+    dataset_path = '/Users/kevin/Datasets/dogs_vs_cats/train/'
+    from base_transforms import *
+
+    transform = DualCompose([ImageShorterResize(300), 
+                             random_crop((224, 224)),
+                             random_hsv(prob=0.8),
+                             RandomCompose([
+                                random_horizontal_flip(),
+                                random_vertical_flip(),
+                                random_flip(),
+                                random_transpose(),
+                                random_shear(),
+                                random_rescale(),
+                                random_rotate(),
+                                CLAHE()
+                             ], max_num=3, ImageOnly=True)], 
+                    ImageOnly=True)
+    print(dataset_path)
     dataset = ImageFolderDataset(dataset_path, transform=transform)
-    
-    img, label = dataset.__getitem__(1)
+
     
 
     for img, label in dataset:
